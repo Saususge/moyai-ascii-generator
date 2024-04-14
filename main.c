@@ -4,33 +4,38 @@
 #include <stdint.h>
 #include <time.h>
 
-typedef struct {             	// Total: 54 bytes
-  	uint16_t  type;             // Magic identifier: 0x4d42
-  	uint32_t  size;             // File size in bytes
-  	uint16_t  reserved1;        // Not used
-  	uint16_t  reserved2;        // Not used
-  	uint32_t  offset;           // Offset to image data in bytes from beginning of file (54 bytes)
-  	uint32_t  dib_header_size;  // DIB Header size in bytes (40 bytes)
-  	int32_t   width_px;         // Width of the image
-  	int32_t   height_px;        // Height of image
-  	uint16_t  num_planes;       // Number of color planes
-  	uint16_t  bits_per_pixel;   // Bits per pixel
-  	uint32_t  compression;      // Compression type 
-  	uint32_t  image_size_bytes; // Image size in bytes
-  	int32_t   x_resolution_ppm; // Pixels per meter
-  	int32_t   y_resolution_ppm; // Pixels per meter
-  	uint32_t  num_colors;       // Number of colors  
-  	uint32_t  important_colors; // Important colors 
-} BMPHeader;
+#pragma pack(push, 1) 
 
-typedef struct {
-    BMPHeader header;
-    unsigned char* data; 
-} BMPImage;
+typedef struct BitmapFileHeader
+{
+	unsigned short bfType;           // BMP 파일 매직 넘버
+    unsigned int   bfSize;           // 파일 크기
+    unsigned short bfReserved1;      // 예약
+    unsigned short bfReserved2;      // 예약
+    unsigned int   bfOffBits;        // 비트맵 데이터의 시작 위치
+} BitmapFileHeader;
 
-char* scale = "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
+typedef struct BitmapInfoHeader
+{
+	unsigned int   biSize;           // 현재 구조체의 크기
+    int            biWidth;          // 비트맵 이미지의 가로 크기
+    int            biHeight;         // 비트맵 이미지의 세로 크기
+    unsigned short biPlanes;         // 사용하는 색상판의 수
+    unsigned short biBitCount;       // 픽셀 하나를 표현하는 비트 수
+    unsigned int   biCompression;    // 압축 방식
+    unsigned int   biSizeImage;      // 비트맵 이미지의 픽셀 데이터 크기
+    int            biXPelsPerMeter;  // 그림의 가로 해상도(미터당 픽셀)
+    int            biYPelsPerMeter;  // 그림의 세로 해상도(미터당 픽셀)
+    unsigned int   biClrUsed;        // 색상 테이블에서 실제 사용되는 색상 수
+    unsigned int   biClrImportant;   // 비트맵을 표현하기 위해 필요한 색상 인덱스 수
+} BitmapInfoHeader;
 
-
+typedef struct RGBTriple
+{
+	unsigned char rgbtBlue;          // 파랑
+    unsigned char rgbtGreen;         // 초록
+    unsigned char rgbtRed;           // 빨강
+} RGBTriple;
 
 int main(void)
 {
@@ -45,21 +50,7 @@ int main(void)
 	
 	FILE* img_file = fopen(directory, "rb");
 
-	if(img_file != NULL)
-		{
-			BMPImage* image = (BMPImage*)malloc(sizeof(BMPImage));
-
-			image = img_file;
-
-			fread(&image->header, sizeof(BMPHeader), 1, img_file);
-
-			image->data = (unsigned char*)malloc();
-
-			free(image);
-		}
-	else
-		printf("file aint loaded");
-
+	
 
 	fclose(img_file);
 }
