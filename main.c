@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <time.h>
 
+#define PIXEL_SIZE   3    // 픽셀 한 개의 크기 3바이트(24비트)
+#define PIXEL_ALIGN  4    // 픽셀 데이터 가로 한 줄은 4의 배수 크기로 저장됨
+
 #pragma pack(push, 1) 
 
 typedef struct BitmapFileHeader
@@ -37,6 +40,8 @@ typedef struct RGBTriple
     unsigned char rgbtRed;           // 빨강
 } RGBTriple;
 
+#pragma pack(pop)
+
 int main(void)
 {
 	srand(time(NULL));
@@ -49,8 +54,15 @@ int main(void)
 	strcat(directory, ".bmp");
 	
 	FILE* img_file = fopen(directory, "rb");
+	FILE* fpTxt;
+	BitmapFileHeader fileheader;
+	BitmapInfoHeader infoheader;
 
+	unsigned char* image;
+	int size;
+	int width, height;
+	int padding;
 	
-
 	fclose(img_file);
+	fclose(fpTxt);
 }
