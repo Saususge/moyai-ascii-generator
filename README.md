@@ -1,11 +1,10 @@
 ## Moyai ascii generator
 
-Sometimes, you need moyai.
+Sometimes, you need moyai in your life.
 
 ---------------------------------------------------------------------------------------------
 
-How to use it
-
+### Usage
 just
 ```bash
 gcc main.c
@@ -15,7 +14,6 @@ then excute it
 ./a.out
 ```
 you will get a result like this
-
 ```bash
 ##############%%**######################################################################
 ##############%%**######################################################################
@@ -62,4 +60,4 @@ you will get a result like this
 ########################################################################################
 ########################################################################################
 ```
-looks too long but it's fine in the console (or terminal)
+It might look too long, but it's fine when displayed in the console (or terminal).
