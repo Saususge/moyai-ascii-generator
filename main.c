@@ -7,6 +7,9 @@
 #define PIXEL_ALIGN  4    
 #pragma pack(push, 1) 
 
+// got bmp struct info from below link (ms doc)
+// https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-bitmap
+
 typedef struct BitmapFileHeader
 {
 	unsigned short bfType;           // BMP magic num
