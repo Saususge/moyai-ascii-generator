@@ -1,51 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <time.h>
 
-#define PIXEL_SIZE   3    // 픽셀 한 개의 크기 3바이트(24비트)
-#define PIXEL_ALIGN  4    // 픽셀 데이터 가로 한 줄은 4의 배수 크기로 저장됨
-
+#define PIXEL_SIZE   3    // size of pixel (24bit bmp)
+#define PIXEL_ALIGN  4    
 #pragma pack(push, 1) 
 
 typedef struct BitmapFileHeader
 {
-	unsigned short bfType;           // BMP 파일 매직 넘버
-    unsigned int   bfSize;           // 파일 크기
-    unsigned short bfReserved1;      // 예약
-    unsigned short bfReserved2;      // 예약
-    unsigned int   bfOffBits;        // 비트맵 데이터의 시작 위치
+	unsigned short bfType;           // BMP magic num
+    unsigned int   bfSize;           // file size
+    unsigned short bfReserved1;      // reserved (should be zero)
+    unsigned short bfReserved2;      
+    unsigned int   bfOffBits;        // start of bitmap image data
 } BitmapFileHeader;
 
 typedef struct BitmapInfoHeader
 {
-	unsigned int   biSize;           // 현재 구조체의 크기
-    int            biWidth;          // 비트맵 이미지의 가로 크기
-    int            biHeight;         // 비트맵 이미지의 세로 크기
-    unsigned short biPlanes;         // 사용하는 색상판의 수
-    unsigned short biBitCount;       // 픽셀 하나를 표현하는 비트 수
-    unsigned int   biCompression;    // 압축 방식
-    unsigned int   biSizeImage;      // 비트맵 이미지의 픽셀 데이터 크기
-    int            biXPelsPerMeter;  // 그림의 가로 해상도(미터당 픽셀)
-    int            biYPelsPerMeter;  // 그림의 세로 해상도(미터당 픽셀)
-    unsigned int   biClrUsed;        // 색상 테이블에서 실제 사용되는 색상 수
-    unsigned int   biClrImportant;   // 비트맵을 표현하기 위해 필요한 색상 인덱스 수
+	unsigned int   biSize;           // size of current struct
+    int            biWidth;          // width of img
+    int            biHeight;         // height of img
+    unsigned short biPlanes;         // color plane nums
+    unsigned short biBitCount;       // bit nums for a pixel
+    unsigned int   biCompression;    // compression type
+    unsigned int   biSizeImage;      // pixel data size of img
+    int            biXPelsPerMeter;  // X resolution (pixel per meter)
+    int            biYPelsPerMeter;  // Y resolution (pixel per meter)
+    unsigned int   biClrUsed;        // nums of used color on plane
+    unsigned int   biClrImportant;   // nums of index for bitmap img
 } BitmapInfoHeader;
 
 typedef struct RGBTriple
 {
-	unsigned char rgbtBlue;          // 파랑
-    unsigned char rgbtGreen;         // 초록
-    unsigned char rgbtRed;           // 빨강
+	unsigned char rgbtBlue;          // B
+    unsigned char rgbtGreen;         // G
+    unsigned char rgbtRed;           // R
 } RGBTriple;
 
 #pragma pack(pop)
 
 int main(void)
 {
-	srand(time(NULL));
-	int img_arr[1024];
+	srand(time(NULL)); // setting rand seed to time
+
+	// moyai img file random namer
 	int r_num = rand() % 144 + 1;
 	char directory[30] = "moyai/";
 	char file_num [5];
@@ -53,16 +52,92 @@ int main(void)
 	strcat(directory, file_num);
 	strcat(directory, ".bmp");
 	
-	FILE* img_file = fopen(directory, "rb");
+	FILE* fpBmp;
 	FILE* fpTxt;
-	BitmapFileHeader fileheader;
-	BitmapInfoHeader infoheader;
+	BitmapFileHeader fileHeader;
+	BitmapInfoHeader infoHeader;
 
 	unsigned char* image;
 	int size;
 	int width, height;
 	int padding;
 	
-	fclose(img_file);
+	char ascii[] = { '#', '#', '@', '%', '=', '+', '*', '^', ':' , ';', '-', '`', '"', '.', ' ' };    // letters for drawing
+
+	fpBmp = fopen(directory, "rb");
+
+    fread(&fileHeader, sizeof(BitmapFileHeader), 1, fpBmp);
+    fread(&infoHeader, sizeof(BitmapInfoHeader), 1, fpBmp);
+
+	size = infoHeader.biSizeImage;    // pixel data size
+    width = infoHeader.biWidth;       // width size of img
+    height = infoHeader.biHeight;     // height size of img
+
+	// calculating padding size
+	padding = (PIXEL_ALIGN - ((width * PIXEL_SIZE) % PIXEL_ALIGN)) % PIXEL_ALIGN;
+
+	if (size == 0)    // getting padding size when pixel size is 0
+    {
+        
+        size = (width * PIXEL_SIZE + padding) * height;
+    }
+
+	image = malloc(size);  
+
+	// move file pointer to starting point of pixel data
+    fseek(fpBmp, fileHeader.bfOffBits, SEEK_SET);
+
+	if (fread(image, size, 1, fpBmp) < 1)
+    {
+        fclose(fpBmp);
+        return 0;
+    }
+
+	fclose(fpBmp);
+
+	fpTxt = fopen("ascii.txt", "w"); 
+
+	// loop y * x times (height * width)
+    for (int y = height - 1; y >= 0; y--)
+    {
+        for (int x = 0; x < width; x++)
+        {
+           
+            int index = (x * PIXEL_SIZE) + (y * (width * PIXEL_SIZE)) + (padding * y);
+
+			// convert current pixel address to RGBtriple pointer and save it
+            RGBTriple *pixel = (RGBTriple *)&image[index];
+
+            // get color from rgb struct
+            unsigned char blue = pixel->rgbtBlue;
+            unsigned char green = pixel->rgbtGreen;
+            unsigned char red = pixel->rgbtRed;
+
+            // get grayscale
+            unsigned char gray = (red + green + blue) / PIXEL_SIZE;
+
+            // get ascii array index
+            char c = ascii[gray * sizeof(ascii) / 256];
+
+            // save twice
+			// because ascii art is too weird when it saves only once
+            fprintf(fpTxt, "%c%c", c, c);
+        }
+
+        fprintf(fpTxt, "\n");
+    }
+
 	fclose(fpTxt);
+	char c;
+	fpTxt = fopen("ascii.txt", "r");
+	
+	// print in console
+	while ((c = fgetc(fpTxt)) != EOF) {
+    	printf("%c", c);
+}
+	fclose(fpTxt);
+
+	free(image);
+
+	return 0;
 }
